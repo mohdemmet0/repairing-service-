@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laptop Service System</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+        
+        .login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); z-index: 5000; display: flex; justify-content: center; align-items: center; }
+        .login-screen.hidden { display: none; }
+        
+        .login-box { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 0 20px rgba(0,0,0,0.3); max-width: 450px; width: 90%; }
+        .login-box h1 { text-align: center; color: #333; margin-bottom: 30px; }
+        
+        .login-options { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .login-option { padding: 25px; border-radius: 10px; text-align: center; cursor: pointer; color: white; transition: 0.3s; }
+        .login-option.admin { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .login-option.branch { background: linear-gradient(135deg, #f093fb, #f5576c); }
+        .login-option h2 { font-size: 2em; margin-bottom: 10px; }
+        .login-option h3 { margin: 0; }
+        .login-option:hover { transform: translateY(-3px); }
+        
+        .login-form { display: none; }
+        .login-form.active { display: block; }
+        
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; color: #333; }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 1em; font-family: inherit; }
+        
+        button { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 30px; border: none; border-radius: 5px; font-weight: 600; cursor: pointer; }
+        button:hover { opacity: 0.9; }
+        
+        .btn-secondary { background: #6c757d !important; }
+        .btn-success { background: #28a745 !important; }
+        .btn-danger { background: #dc3545 !important; }
+        
+        .container { max-width: 1200px; margin: 0 auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 0 20px rgba(0,0,0,0.3); display: none; }
+        .container.active { display: block; }
+        
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 1.5em; }
+        
+        .logout-btn { background: rgba(255,255,255,0.3); padding: 8px 15px; border: 2px solid white; color: white; cursor: pointer; border-radius: 5px; }
+        
+        .nav-tabs { display: flex; background: #f0f0f0; border-bottom: 2px solid #ddd; flex-wrap: wrap; }
+        .nav-tab { flex: 1; padding: 15px; text-align: center; cursor: pointer; background: #f0f0f0; border: none; font-weight: 600; min-width: 100px; }
+        .nav-tab.active { background: white; border-bottom: 3px solid #667eea; }
+        .nav-tab.hidden { display: none; }
+        
+        .content { padding: 30px; }
+        .tab { display: none; }
+        .tab.active { display: block; }
+        
+        h2 { color: #333; margin-bottom: 20px; }
+        h3 { color: #666; margin-top: 20px; margin-bottom: 15px; border-bottom: 2px solid #667eea; padding-bottom: 10px; }
+        
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { background: #f0f0f0; padding: 12px; text-align: left; border-bottom: 2px solid #ddd; font-weight: 600; }
+        td { padding: 12px; border-bottom: 1px solid #ddd; }
+        
+        .badge { padding: 5px 10px; border-radius: 15px; font-size: 0.85em; font-weight: 600; }
+        .badge-success { background: #d4edda; color: #155724; }
+        .badge-warning { background: #fff3cd; color: #856404; }
+        .badge-danger { background: #f8d7da; color: #721c24; }
+        
+        .info-box { background: #f9f9f9; padding: 20px; border-radius: 5px; border-left: 4px solid #667eea; margin-bottom: 20px; }
+        
+        .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 20px 0; }
+        .stat-card { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 20px; border-radius: 5px; text-align: center; }
+        .stat-card .number { font-size: 2em; font-weight: bold; margin-top: 10px; }
+        
+        .btn-group { display: flex; gap: 5px; flex-wrap: wrap; }
+        .btn-group button { padding: 8px 12px; font-size: 0.9em; flex: 1; min-width: 60px; }
+        
+        .btn-edit { background: #17a2b8 !important; }
+        .btn-whatsapp { background: #25d366 !important; }
+        
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
+        .modal.active { display: flex; align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 30px; border-radius: 10px; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; font-size: 1.3em; font-weight: 600; }
+        .close { cursor: pointer; font-size: 1.5em; }
+        
+        .no-data { text-align: center; padding: 40px; color: #999; }
+        
+        .status-msg { padding: 15px; margin: 15px 0; border-radius: 5px; }
+        .status-success { background: #d4edda; color: #155724; border-left: 4px solid #28a745; }
+        .status-warning { background: #fff3cd; color: #856404; border-left: 4px solid #ffc107; }
+        .status-error { background: #f8d7da; color: #721c24; border-left: 4px solid #dc3545; }
+    </style>
+</head>
+<body>
+    <!-- LOGIN SCREEN -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-box">
+            <h1>🔧 Laptop Service System</h1>
+            
+            <div class="login-options" id="loginOptions">
+                <div class="login-option admin" onclick="showAdminLogin()">
+                    <h2>🔐</h2>
+                    <h3>Admin</h3>
+                </div>
+                <div class="login-option branch" onclick="showBranchLogin()">
+                    <h2>🏢</h2>
+                    <h3>Branch</h3>
+                </div>
+            </div>
+            
+            <form id="adminForm" class="login-form" onsubmit="adminLogin(event)">
+                <div class="form-group">
+                    <label>Password:</label>
+                    <input type="password" id="adminPass" required>
+                </div>
+                <button type="submit">Login Admin</button>
+                <button type="button" class="btn-secondary" onclick="backToOptions()" style="margin-top: 10px; width: 100%;">Back</button>
+            </form>
+            
+            <form id="branchForm" class="login-form" onsubmit="branchLogin(event)">
+                <div class="form-group">
+                    <label>Select Branch:</label>
+                    <select id="branchList" required>
+                        <option value="">-- Select --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Password:</label>
+                    <input type="password" id="branchPass" required>
+                </div>
+                <button type="submit">Login Branch</button>
+                <button type="button" class="btn-secondary" onclick="backToOptions()" style="margin-top: 10px; width: 100%;">Back</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MAIN APP -->
+    <div class="container" id="mainApp">
+        <div class="header">
+            <div>
+                <h1>🔧 Laptop Service System</h1>
+                <p id="userInfo">User</p>
+            </div>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="switchTab('dashboard')">📊 Dashboard</button>
+            <button class="nav-tab" id="addTab" onclick="switchTab('add')">➕ Add</button>
+            <button class="nav-tab" onclick="switchTab('list')">📋 List</button>
+            <button class="nav-tab" id="branchTab" onclick="switchTab('branch')">🏢 Branch</button>
+            <button class="nav-tab" id="settingsTab" onclick="switchTab('settings')">⚙️ Settings</button>
+        </div>
+
+        <div class="content">
+            <!-- DASHBOARD -->
+            <div id="dashboard" class="tab active">
+                <h2>📊 Dashboard</h2>
+                <div class="stats">
+                    <div class="stat-card">
+                        <div>Total</div>
+                        <div class="number" id="statTotal">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div>In Progress</div>
+                        <div class="number" id="statProcess">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div>Completed</div>
+                        <div class="number" id="statComplete">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ADD CUSTOMER (BRANCH ONLY) -->
+            <div id="add" class="tab">
+                <h2>➕ Add New Customer</h2>
+                <form onsubmit="saveCustomer(event)">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Name *</label>
+                            <input type="text" id="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Phone *</label>
+                            <input type="tel" id="phone" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="email">
+                        </div>
+                        <div class="form-group">
+                            <label>Device Type *</label>
+                            <select id="deviceType" required>
+                                <option value="">Select</option>
+                                <option value="Laptop">Laptop</option>
+                                <option value="Desktop">Desktop</option>
+                                <option value="Tablet">Tablet</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Brand *</label>
+                            <input type="text" id="brand" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Model</label>
+                            <input type="text" id="model">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Serial Number</label>
+                            <input type="text" id="serial">
+                        </div>
+                        <div class="form-group">
+                            <label>Service Type *</label>
+                            <select id="serviceType" required>
+                                <option value="">Select</option>
+                                <option value="Cleaning">Cleaning</option>
+                                <option value="Replacement">Replacement</option>
+                                <option value="Software">Software</option>
+                                <option value="Recovery">Recovery</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Problem/Damage *</label>
+                        <textarea id="issue" required rows="3"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Estimated Cost (RM) *</label>
+                        <input type="number" id="cost" required step="0.01" min="0">
+                    </div>
+
+                    <button type="submit">💾 Save</button>
+                </form>
+            </div>
+
+            <!-- LIST -->
+            <div id="list" class="tab">
+                <h2>📋 Customer List</h2>
+                <input type="text" id="search" placeholder="Search..." style="width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 5px;" onkeyup="displayList()">
+                <div id="listContainer"></div>
+            </div>
+
+            <!-- BRANCH (ADMIN ONLY) -->
+            <div id="branch" class="tab">
+                <h2>🏢 Manage Branches</h2>
+                <div class="info-box">
+                    <h3>Add New Branch</h3>
+                    <form onsubmit="addBranch(event)">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Branch Name *</label>
+                                <input type="text" id="branchName" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Location</label>
+                                <input type="text" id="branchLocation">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Password *</label>
+                                <input type="password" id="branchPassword" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Phone</label>
+                                <input type="tel" id="branchPhone">
+                            </div>
+                        </div>
+                        <button type="submit">➕ Add Branch</button>
+                    </form>
+                </div>
+                
+                <h3>Branch List</h3>
+                <div id="branchListContainer"></div>
+            </div>
+
+            <!-- SETTINGS (ADMIN ONLY) -->
+            <div id="settings" class="tab">
+                <h2>⚙️ System Settings</h2>
+                
+                <!-- GOOGLE SHEETS -->
+                <div class="info-box">
+                    <h3>📊 Google Sheets Integration</h3>
+                    <div class="form-group">
+                        <label>Google Spreadsheet ID:</label>
+                        <input type="text" id="spreadsheetId" placeholder="Example: 1A2B3C4D5E6F7G8H9I0J">
+                        <small style="color: #666; margin-top: 5px; display: block;">📌 Copy from sheet URL (between /d/ and /edit)</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Google API Key:</label>
+                        <input type="text" id="apiKey" placeholder="Get from Google Cloud Console">
+                        <small style="color: #666; margin-top: 5px; display: block;">📌 Create API key at console.cloud.google.com</small>
+                    </div>
+                    <button onclick="saveSheetSettings()" class="btn-success">💾 Save Google Sheets</button>
+                    <button onclick="testSheetConnection()" class="btn-secondary" style="margin-left: 10px;">🧪 Test Connection</button>
+                    <button onclick="uploadToSheets()" class="btn-success" style="margin-left: 10px;">☁️ Upload Now</button>
+                    <div id="sheetStatus"></div>
+                </div>
+
+                <!-- BROADCAST WHATSAPP -->
+                <div class="info-box">
+                    <h3>📱 WhatsApp Broadcast</h3>
+                    <div class="form-group">
+                        <label>Message Template:</label>
+                        <textarea id="broadcastMsg" rows="8" placeholder="Example: Hello {name}..."></textarea>
+                        <small style="color: #666; margin-top: 5px; display: block;">Variables: {name}, {phone}, {device}, {brand}, {problem}, {cost}, {date}, {branch}</small>
+                    </div>
+                    <button onclick="saveTemplate()" class="btn-success">💾 Save Template</button>
+                    <button type="button" onclick="showBroadcastModal()" class="btn-whatsapp" style="background: #25d366 !important; margin-left: 10px;">📤 Broadcast Now</button>
+                </div>
+
+                <!-- ADMIN PASSWORD -->
+                <div class="info-box">
+                    <h3>🔐 Change Admin Password</h3>
+                    <div class="form-group">
+                        <label>New Password:</label>
+                        <input type="password" id="newAdminPass">
+                    </div>
+                    <button onclick="changeAdminPass()" class="btn-success">💾 Change Password</button>
+                </div>
+
+                <!-- EXPORT & CLEAR -->
+                <div class="info-box">
+                    <h3>📥 Data Management</h3>
+                    <button onclick="exportCSV()" class="btn-success">📥 Export CSV</button>
+                    <button onclick="clearAllData()" class="btn-danger" style="margin-left: 10px;">🗑️ Delete All</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BROADCAST MODAL -->
+    <div id="broadcastModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>📤 WhatsApp Broadcast to All</span>
+                <span class="close" onclick="closeBroadcastModal()">&times;</span>
+            </div>
+            <div class="form-group">
+                <label>Filter Status (Optional):</label>
+                <select id="broadcastFilter" onchange="updateBroadcastPreview()">
+                    <option value="all">All Customers</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Completed">Completed</option>
+                    <option value="On Hold">On Hold</option>
+                </select>
+            </div>
+            <div id="broadcastPreview" style="background: #f9f9f9; padding: 15px; border-radius: 5px; margin: 15px 0; max-height: 200px; overflow-y: auto; white-space: pre-wrap; border: 1px solid #ddd;"></div>
+            <button onclick="executeBroadcast()" class="btn-whatsapp" style="background: #25d366 !important; width: 100%;">✅ Send Broadcast</button>
+            <button type="button" class="btn-secondary" onclick="closeBroadcastModal()" style="width: 100%; margin-top: 10px;">Cancel</button>
+            <div id="broadcastStatus" style="margin-top: 15px;"></div>
+        </div>
+    </div>
+
+    <!-- EDIT STATUS MODAL -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>✏️ Change Status</span>
+                <span class="close" onclick="closeEditModal()">&times;</span>
+            </div>
+            <form onsubmit="updateStatus(event)">
+                <input type="hidden" id="editId">
+                <div class="form-group">
+                    <label>New Status:</label>
+                    <select id="newStatus" required>
+                        <option value="">-- Select --</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Completed">Completed</option>
+                        <option value="On Hold">On Hold</option>
+                    </select>
+                </div>
+                <button type="submit">💾 Save</button>
+                <button type="button" class="btn-secondary" onclick="closeEditModal()" style="margin-left: 10px;">Cancel</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // DATA
+        let userType = null;
+        let currentBranch = null;
+        let customers = [];
+        let branches = [];
+
+        // INIT
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            updateBranchSelect();
+            loadSettings();
+        });
+
+        // LOAD DATA
+        function loadData() {
+            customers = JSON.parse(localStorage.getItem('customers') || '[]');
+            branches = JSON.parse(localStorage.getItem('branches') || '[]');
+        }
+
+        function saveData() {
+            localStorage.setItem('customers', JSON.stringify(customers));
+            localStorage.setItem('branches', JSON.stringify(branches));
+        }
+
+        // LOGIN
+        function showAdminLogin() {
+            document.getElementById('loginOptions').style.display = 'none';
+            document.getElementById('adminForm').classList.add('active');
+        }
+
+        function showBranchLogin() {
+            document.getElementById('loginOptions').style.display = 'none';
+            document.getElementById('branchForm').classList.add('active');
+        }
+
+        function backToOptions() {
+            document.getElementById('loginOptions').style.display = 'grid';
+            document.getElementById('adminForm').classList.remove('active');
+            document.getElementById('branchForm').classList.remove('active');
+        }
+
+        function adminLogin(e) {
+            e.preventDefault();
+            const pass = document.getElementById('adminPass').value;
+            if (pass === (localStorage.getItem('adminPassword') || 'admin123')) {
+                userType = 'admin';
+                localStorage.setItem('loginType', 'admin');
+                showApp();
+            } else {
+                alert('❌ Password incorrect!');
+            }
+        }
+
+        function branchLogin(e) {
+            e.preventDefault();
+            const name = document.getElementById('branchList').value;
+            const pass = document.getElementById('branchPass').value;
+            const branch = branches.find(b => b.name === name);
+            
+            if (branch && branch.password === pass) {
+                userType = 'branch';
+                currentBranch = name;
+                localStorage.setItem('loginType', 'branch');
+                localStorage.setItem('branch', name);
+                showApp();
+                switchTab('dashboard');
+            } else {
+                alert('❌ Branch or password incorrect!');
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('loginType');
+            localStorage.removeItem('branch');
+            userType = null;
+            currentBranch = null;
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('mainApp').classList.remove('active');
+            document.getElementById('adminForm').classList.remove('active');
+            document.getElementById('branchForm').classList.remove('active');
+            document.getElementById('loginOptions').style.display = 'grid';
+            document.getElementById('adminPass').value = '';
+            document.getElementById('branchPass').value = '';
+        }
+
+        function showApp() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.add('active');
+            
+            const info = userType === 'admin' ? '🔐 Admin' : `🏢 ${currentBranch}`;
+            document.getElementById('userInfo').textContent = info;
+            
+            document.getElementById('addTab').classList.toggle('hidden', userType === 'admin');
+            document.getElementById('branchTab').classList.toggle('hidden', userType !== 'admin');
+            document.getElementById('settingsTab').classList.toggle('hidden', userType !== 'admin');
+            
+            updateStats();
+            updateBranchList();
+            displayList();
+        }
+
+        // BRANCH
+        function updateBranchSelect() {
+            const select = document.getElementById('branchList');
+            select.innerHTML = '<option value="">-- Select --</option>';
+            branches.forEach(b => {
+                const option = document.createElement('option');
+                option.value = b.name;
+                option.textContent = b.name;
+                select.appendChild(option);
+            });
+        }
+
+        function addBranch(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('branchName').value;
+            if (branches.find(b => b.name === name)) {
+                alert('❌ Branch already exists!');
+                return;
+            }
+            
+            branches.push({
+                name: name,
+                location: document.getElementById('branchLocation').value || '-',
+                password: document.getElementById('branchPassword').value,
+                phone: document.getElementById('branchPhone').value || '-'
+            });
+            
+            saveData();
+            updateBranchSelect();
+            updateBranchList();
+            document.querySelector('#branch form').reset();
+            alert('✅ Branch added!');
+        }
+
+        function updateBranchList() {
+            const container = document.getElementById('branchListContainer');
+            
+            if (branches.length === 0) {
+                container.innerHTML = '<div class="no-data">No branches</div>';
+                return;
+            }
+            
+            let html = '<table><thead><tr><th>Name</th><th>Location</th><th>Phone</th><th>Password</th><th>Action</th></tr></thead><tbody>';
+            
+            branches.forEach((b, i) => {
+                html += `<tr>
+                    <td><strong>${b.name}</strong></td>
+                    <td>${b.location}</td>
+                    <td>${b.phone}</td>
+                    <td>${b.password}</td>
+                    <td><button class="btn-danger" onclick="deleteBranch(${i})">🗑️ Delete</button></td>
+                </tr>`;
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function deleteBranch(i) {
+            if (confirm('✓ Are you sure?')) {
+                branches.splice(i, 1);
+                saveData();
+                updateBranchSelect();
+                updateBranchList();
+            }
+        }
+
+        // CUSTOMER
+        function saveCustomer(e) {
+            e.preventDefault();
+            
+            const phone = document.getElementById('phone').value;
+            const existing = customers.find(c => c.phone === phone);
+            
+            const data = {
+                id: existing ? existing.id : Date.now(),
+                branch: currentBranch,
+                name: document.getElementById('name').value,
+                phone: phone,
+                email: document.getElementById('email').value || '-',
+                deviceType: document.getElementById('deviceType').value,
+                brand: document.getElementById('brand').value,
+                model: document.getElementById('model').value || '-',
+                serial: document.getElementById('serial').value || '-',
+                issue: document.getElementById('issue').value,
+                serviceType: document.getElementById('serviceType').value,
+                cost: document.getElementById('cost').value,
+                status: existing ? existing.status : 'In Progress',
+                finalCost: existing ? existing.finalCost : document.getElementById('cost').value,
+                date: existing ? existing.date : new Date().toLocaleDateString('en-US')
+            };
+            
+            if (existing) {
+                Object.assign(existing, data);
+            } else {
+                customers.push(data);
+            }
+            
+            saveData();
+            alert('✅ Customer saved!');
+            document.querySelector('#add form').reset();
+            updateStats();
+            uploadToSheets();
+        }
+
+        function displayList() {
+            const search = document.getElementById('search').value.toLowerCase();
+            let filtered = customers;
+            
+            if (userType === 'branch') {
+                filtered = filtered.filter(c => c.branch === currentBranch);
+            }
+            
+            filtered = filtered.filter(c => 
+                c.name.toLowerCase().includes(search) || 
+                c.phone.includes(search)
+            );
+            
+            const container = document.getElementById('listContainer');
+            
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="no-data">No data</div>';
+                return;
+            }
+            
+            let html = '<table><thead><tr><th>Name</th><th>Phone</th><th>Device</th><th>Branch</th><th>Status</th><th>Cost</th><th>Action</th></tr></thead><tbody>';
+            
+            filtered.forEach(c => {
+                const statusBg = c.status === 'Completed' ? 'badge-success' : c.status === 'In Progress' ? 'badge-warning' : 'badge-danger';
+                html += `<tr>
+                    <td>${c.name}</td>
+                    <td>${c.phone}</td>
+                    <td>${c.deviceType} ${c.brand}</td>
+                    <td>${c.branch}</td>
+                    <td><span class="badge ${statusBg}">${c.status}</span></td>
+                    <td>RM ${c.finalCost}</td>
+                    <td>
+                        <div class="btn-group">
+                            <button class="btn-edit" onclick="openEditModal(${c.id})">✏️</button>
+                            <button class="btn-whatsapp" onclick="sendWhatsapp(${c.id})">📱</button>
+                            ${userType === 'admin' ? `<button class="btn-danger" onclick="deleteCustomer(${c.id})">🗑️</button>` : ''}
+                        </div>
+                    </td>
+                </tr>`;
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function openEditModal(id) {
+            const c = customers.find(x => x.id === id);
+            if (!c) return;
+            
+            document.getElementById('editId').value = id;
+            document.getElementById('newStatus').value = c.status;
+            document.getElementById('editModal').classList.add('active');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('active');
+        }
+
+        function updateStatus(e) {
+            e.preventDefault();
+            
+            const id = parseInt(document.getElementById('editId').value);
+            const c = customers.find(x => x.id === id);
+            
+            if (c) {
+                c.status = document.getElementById('newStatus').value;
+                saveData();
+                closeEditModal();
+                displayList();
+                updateStats();
+                uploadToSheets();
+                alert('✅ Status changed!');
+            }
+        }
+
+        function deleteCustomer(id) {
+            if (confirm('✓ Are you sure?')) {
+                customers = customers.filter(c => c.id !== id);
+                saveData();
+                displayList();
+                updateStats();
+                uploadToSheets();
+            }
+        }
+
+        function sendWhatsapp(id) {
+            const c = customers.find(x => x.id === id);
+            if (!c) return;
+            
+            let template = localStorage.getItem('template') || 
+                'Hello {name}, thank you! Device: {device}. Cost: RM {cost}. Thank you!';
+            
+            const msg = template
+                .replace('{name}', c.name)
+                .replace('{phone}', c.phone)
+                .replace('{device}', `${c.deviceType} ${c.brand}`)
+                .replace('{brand}', c.brand)
+                .replace('{problem}', c.issue)
+                .replace('{cost}', c.cost)
+                .replace('{date}', c.date)
+                .replace('{branch}', c.branch);
+            
+            const phone = c.phone.replace(/\D/g, '');
+            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`);
+        }
+
+        // BROADCAST
+        function showBroadcastModal() {
+            const template = localStorage.getItem('template') || 'Hello {name}...';
+            document.getElementById('broadcastMsg').value = template;
+            document.getElementById('broadcastModal').classList.add('active');
+            updateBroadcastPreview();
+        }
+
+        function closeBroadcastModal() {
+            document.getElementById('broadcastModal').classList.remove('active');
+        }
+
+        function updateBroadcastPreview() {
+            const template = document.getElementById('broadcastMsg').value;
+            const filter = document.getElementById('broadcastFilter').value;
+            
+            let toSend = customers;
+            if (filter !== 'all') {
+                toSend = toSend.filter(c => c.status === filter);
+            }
+            
+            if (toSend.length > 0) {
+                const preview = template
+                    .replace('{name}', toSend[0].name)
+                    .replace('{phone}', toSend[0].phone)
+                    .replace('{device}', `${toSend[0].deviceType} ${toSend[0].brand}`)
+                    .replace('{brand}', toSend[0].brand)
+                    .replace('{problem}', toSend[0].issue)
+                    .replace('{cost}', toSend[0].cost)
+                    .replace('{date}', toSend[0].date)
+                    .replace('{branch}', toSend[0].branch);
+                
+                document.getElementById('broadcastPreview').textContent = `Preview (Customer 1 of ${toSend.length}):\n\n${preview}`;
+            }
+        }
+
+        function executeBroadcast() {
+            const template = document.getElementById('broadcastMsg').value;
+            const filter = document.getElementById('broadcastFilter').value;
+            
+            let toSend = customers;
+            if (filter !== 'all') {
+                toSend = toSend.filter(c => c.status === filter);
+            }
+            
+            if (toSend.length === 0) {
+                alert('⚠️ No customers to send!');
+                return;
+            }
+            
+            const statusDiv = document.getElementById('broadcastStatus');
+            statusDiv.innerHTML = `<div class="status-msg status-warning">📤 Sending ${toSend.length} messages...</div>`;
+            
+            let sent = 0;
+            
+            toSend.forEach((c, i) => {
+                setTimeout(() => {
+                    const msg = template
+                        .replace('{name}', c.name)
+                        .replace('{phone}', c.phone)
+                        .replace('{device}', `${c.deviceType} ${c.brand}`)
+                        .replace('{brand}', c.brand)
+                        .replace('{problem}', c.issue)
+                        .replace('{cost}', c.cost)
+                        .replace('{date}', c.date)
+                        .replace('{branch}', c.branch);
+                    
+                    const phone = c.phone.replace(/\D/g, '');
+                    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`);
+                    
+                    sent++;
+                    statusDiv.innerHTML = `<div class="status-msg status-warning">✅ Sent ${sent}/${toSend.length}</div>`;
+                    
+                    if (sent === toSend.length) {
+                        statusDiv.innerHTML = `<div class="status-msg status-success">✅ Done! ${toSend.length} messages opened in WhatsApp.</div>`;
+                    }
+                }, i * 1500);
+            });
+        }
+
+        // SETTINGS
+        function loadSettings() {
+            const id = localStorage.getItem('spreadsheetId');
+            const key = localStorage.getItem('apiKey');
+            const template = localStorage.getItem('template') || 
+                'Hello {name},\n\nThank you for sending your {device} {brand} for service at {branch}.\n\nProblem: {problem}\nCost: RM {cost}\nDate: {date}\n\nThank you! 🙏';
+            
+            if (id) document.getElementById('spreadsheetId').value = id;
+            if (key) document.getElementById('apiKey').value = key;
+            document.getElementById('broadcastMsg').value = template;
+        }
+
+        function saveSheetSettings() {
+            const id = document.getElementById('spreadsheetId').value;
+            const key = document.getElementById('apiKey').value;
+            
+            if (!id || !key) {
+                document.getElementById('sheetStatus').innerHTML = '<div class="status-msg status-error">❌ Please fill Spreadsheet ID and API Key</div>';
+                return;
+            }
+            
+            localStorage.setItem('spreadsheetId', id);
+            localStorage.setItem('apiKey', key);
+            document.getElementById('sheetStatus').innerHTML = '<div class="status-msg status-success">✅ Google Sheets settings saved!</div>';
+        }
+
+        function testSheetConnection() {
+            const id = document.getElementById('spreadsheetId').value;
+            const key = document.getElementById('apiKey').value;
+            
+            if (!id || !key) {
+                document.getElementById('sheetStatus').innerHTML = '<div class="status-msg status-error">❌ Please fill Spreadsheet ID and API Key</div>';
+                return;
+            }
+            
+            document.getElementById('sheetStatus').innerHTML = '<div class="status-msg status-warning">🔄 Testing connection...</div>';
+            
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${id}?key=${key}`;
+            
+            fetch(url, { method: 'GET' })
+                .then(response => {
+                    if (response.ok) {
+                        document.getElementById('sheetStatus').innerHTML = '<div class="status-msg status-success">✅ Google Sheets connection successful!</div>';
+                    } else {
+                        document.getElementById('sheetStatus').innerHTML = '<div class="status-msg status-error">❌ Connection failed! Check ID and API Key.</div>';
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('sheetStatus').innerHTML = '<div class="status-msg status-error">❌ Connection failed! ' + error.message + '</div>';
+                });
+        }
+
+        async function uploadToSheets() {
+            const id = localStorage.getItem('spreadsheetId');
+            const key = localStorage.getItem('apiKey');
+            
+            if (!id || !key) {
+                alert('⚠️ Please configure Google Sheets first!');
+                return;
+            }
+            
+            document.getElementById('sheetStatus').innerHTML = '<div class="status-msg status-warning">📤 Uploading...</div>';
+            
+            try {
+                const values = customers.map(c => [
+                    c.name,
+                    c.phone,
+                    c.email,
+                    c.deviceType,
+                    c.brand,
+                    c.model,
+                    c.serial,
+                    c.issue,
+                    c.serviceType,
+                    c.cost,
+                    c.finalCost,
+                    c.status,
+                    c.branch,
+                    c.date
+                ]);
+                
+                const body = {
+                    values: [
+                        ['Name', 'Phone', 'Email', 'Device', 'Brand', 'Model', 'Serial', 'Problem', 'Service', 'Estimate', 'Final', 'Status', 'Branch', 'Date'],
+                        ...values
+                    ]
+                };
+                
+                const url = `https://sheets.googleapis.com/v4/spreadsheets/${id}/values/Sheet1!A1:N?valueInputOption=RAW&key=${key}`;
+                
+                const response = await fetch(url, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                
+                if (response.ok) {
+                    alert('✅ Data uploaded to Google Sheets!');
+                    document.getElementById('sheetStatus').innerHTML = '<div class="status-msg status-success">✅ Upload successful!</div>';
+                } else {
+                    alert('❌ Upload failed! Check your API key.');
+                    document.getElementById('sheetStatus').innerHTML = '<div class="status-msg status-error">❌ Upload failed!</div>';
+                }
+            } catch (error) {
+                alert('❌ Upload error: ' + error.message);
+                document.getElementById('sheetStatus').innerHTML = '<div class="status-msg status-error">❌ Upload error!</div>';
+            }
+        }
+
+        function saveTemplate() {
+            const template = document.getElementById('broadcastMsg').value;
+            localStorage.setItem('template', template);
+            alert('✅ Template saved!');
+        }
+
+        function changeAdminPass() {
+            const newPass = document.getElementById('newAdminPass').value;
+            if (!newPass) {
+                alert('⚠️ Please enter new password!');
+                return;
+            }
+            localStorage.setItem('adminPassword', newPass);
+            document.getElementById('newAdminPass').value = '';
+            alert('✅ Admin password changed!');
+        }
+
+        function exportCSV() {
+            if (customers.length === 0) {
+                alert('⚠️ No data to export!');
+                return;
+            }
+            
+            let csv = 'Name,Phone,Email,Device,Brand,Problem,Cost,Status,Branch,Date\n';
+            customers.forEach(c => {
+                csv += `"${c.name}","${c.phone}","${c.email}","${c.deviceType}","${c.brand}","${c.issue}",${c.finalCost},"${c.status}","${c.branch}","${c.date}"\n`;
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'customers_' + new Date().getTime() + '.csv';
+            a.click();
+            alert('✅ Data exported!');
+        }
+
+        function clearAllData() {
+            if (!confirm('⚠️ DELETE ALL DATA?')) return;
+            if (!confirm('⚠️ Are you absolutely sure?')) return;
+            
+            localStorage.clear();
+            customers = [];
+            branches = [];
+            location.reload();
+        }
+
+        // STATS
+        function updateStats() {
+            let filtered = customers;
+            
+            if (userType === 'branch') {
+                filtered = filtered.filter(c => c.branch === currentBranch);
+            }
+            
+            document.getElementById('statTotal').textContent = filtered.length;
+            document.getElementById('statProcess').textContent = filtered.filter(c => c.status === 'In Progress').length;
+            document.getElementById('statComplete').textContent = filtered.filter(c => c.status === 'Completed').length;
+        }
+
+        // TAB
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            
+            document.getElementById(tab).classList.add('active');
+            const btn = document.querySelector(`[onclick="switchTab('${tab}')"]`);
+            if (btn) btn.classList.add('active');
+            
+            if (tab === 'list') displayList();
+            if (tab === 'branch') updateBranchList();
+        }
+    </script>
+</body>
+</html>
